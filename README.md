@@ -52,7 +52,7 @@ npm run preview    # serve dist/ at http://127.0.0.1:5175 (with the strict CSP)
 - Three-step simulated checkout:
   - pickup with time slots, or dine-in with a table number;
   - name and Malaysian mobile number checks;
-  - pay at counter, or simulated FPX/card. It never asks for card or bank details.
+  - pay at counter, DuitNow QR or Touch 'n Go eWallet. The QR options are simulated with a non-scannable demo pattern, and the site never asks for card or bank details.
   - confirmation with a demo order number and receipt.
 - Accessibility:
   - skip link and focus-trapped dialogs, with `inert` set on the background;

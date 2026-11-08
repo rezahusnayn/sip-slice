@@ -11,16 +11,17 @@ import { gsap, useGSAP, dur } from "../lib/motion";
  * - No network requests are made; nothing leaves the browser.
  * - Customer details live only in this component's state and are discarded on close.
  * - No card numbers or bank credentials are ever requested.
+ * - The QR shown for DuitNow / TNG is a decorative pattern, not a payable code.
  */
 
 type Step = "details" | "payment" | "processing" | "done";
 type Fulfilment = "pickup" | "dinein";
-type Method = "counter" | "fpx" | "card";
+type Method = "counter" | "duitnow" | "tng";
 
 const METHODS: { id: Method; label: string; hint: string }[] = [
   { id: "counter", label: "Pay at counter", hint: "Settle when you collect" },
-  { id: "fpx", label: "Online banking (FPX)", hint: "Simulated — no bank redirect" },
-  { id: "card", label: "Debit / credit card", hint: "Simulated — no card details asked" },
+  { id: "duitnow", label: "DuitNow QR", hint: "Scan with any banking or e-wallet app (simulated)" },
+  { id: "tng", label: "Touch 'n Go eWallet", hint: "Pay in the TNG eWallet app (simulated)" },
 ];
 
 type Receipt = {
@@ -265,13 +266,27 @@ export function Checkout({ onClose }: { onClose: () => void }) {
                   ))}
                 </div>
               </fieldset>
+              {method !== "counter" && (
+                <div className="qr-demo">
+                  <DemoQr />
+                  <div>
+                    <p className="qr-demo__title">
+                      {method === "duitnow" ? "DuitNow QR" : "Touch 'n Go eWallet"} · {formatRM(cart.totals.total)}
+                    </p>
+                    <p className="qr-demo__note">
+                      Demo only. This is a decorative pattern, not a real QR code, so scanning it does nothing. In
+                      this prototype, tap the button below to simulate a successful payment.
+                    </p>
+                  </div>
+                </div>
+              )}
               <OrderSummary lines={cart.lines} totals={cart.totals} />
               <div className="co__row">
                 <button type="button" className="btn btn--ghost" onClick={() => setStep("details")}>
                   Back
                 </button>
                 <button type="button" className="btn btn--primary btn--grow" onClick={pay}>
-                  {method === "counter" ? "Place demo order" : "Simulate payment"} · {formatRM(cart.totals.total)}
+                  {method === "counter" ? "Place demo order" : "I've paid (simulate)"} · {formatRM(cart.totals.total)}
                 </button>
               </div>
             </div>
@@ -280,7 +295,7 @@ export function Checkout({ onClose }: { onClose: () => void }) {
           {step === "processing" && (
             <div className="step-anim co__processing" role="status" aria-live="assertive">
               <span className="spinner" aria-hidden="true" />
-              <p>{method === "counter" ? "Sending to the kitchen (simulated)…" : "Authorising payment (simulated)…"}</p>
+              <p>{method === "counter" ? "Sending to the kitchen (simulated)…" : "Confirming payment (simulated)…"}</p>
             </div>
           )}
 
@@ -298,7 +313,9 @@ export function Checkout({ onClose }: { onClose: () => void }) {
                 {receipt.fulfilment === "pickup"
                   ? `Your order would be ready for pickup at ${receipt.when}.`
                   : `Your order would be served to table ${receipt.table}.`}{" "}
-                {receipt.method === "counter" ? "Payment: at the counter." : "Payment: simulated, nothing charged."}
+                {receipt.method === "counter"
+                  ? "Payment: at the counter."
+                  : `Payment: ${receipt.method === "duitnow" ? "DuitNow QR" : "Touch 'n Go eWallet"} (simulated, nothing charged).`}
               </p>
               <OrderSummary lines={receipt.lines} totals={receipt.totals} open />
               <p className="fineprint">
@@ -395,3 +412,38 @@ function OrderSummary({ lines, totals, open = false }: { lines: CartLine[]; tota
 }
 
 const prefersFast = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Decorative, deterministic QR-like pattern. Deliberately NOT a valid QR code. */
+function DemoQr() {
+  const n = 21;
+  const cells: JSX.Element[] = [];
+  const finder = (x: number, y: number) => x < 7 && y < 7;
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const inFinder = finder(x, y) || finder(n - 1 - x, y) || finder(x, n - 1 - y);
+      if (inFinder) continue;
+      const v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+      if (v - Math.floor(v) > 0.52) cells.push(<rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />);
+    }
+  }
+  const F = ({ x, y }: { x: number; y: number }) => (
+    <g transform={`translate(${x} ${y})`}>
+      <rect width="7" height="7" />
+      <rect x="1" y="1" width="5" height="5" fill="#fff" />
+      <rect x="2" y="2" width="3" height="3" />
+    </g>
+  );
+  return (
+    <svg className="qr-demo__code" viewBox="-1 -1 23 23" aria-hidden="true" shapeRendering="crispEdges">
+      <rect x="-1" y="-1" width="23" height="23" fill="#fff" />
+      <g fill="#11143a">
+        {cells}
+        <F x={0} y={0} />
+        <F x={14} y={0} />
+        <F x={0} y={14} />
+      </g>
+      <rect x="8" y="8" width="5" height="5" fill="#fff" />
+      <text x="10.5" y="11.4" textAnchor="middle" fontSize="2.2" fontWeight="700" fill="#a3323b">DEMO</text>
+    </svg>
+  );
+}

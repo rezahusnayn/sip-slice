@@ -567,10 +567,12 @@ p {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow);
-  transition: box-shadow 0.35s ease, transform 0.35s ease;
+  /* Hover lift uses the independent `translate` property so it never fights
+     GSAP Flip, which animates `transform` during filtering. */
+  transition: box-shadow 0.35s ease, translate 0.35s ease;
 }
 .card:hover {
-  transform: translateY(-4px);
+  translate: 0 -4px;
   box-shadow: 0 2px 4px rgb(10 12 36 / 0.06), 0 30px 60px -20px rgb(10 12 36 / 0.35);
 }
 .card__media {
@@ -1639,7 +1641,7 @@ p {
   overflow: visible;
 }
 .card.mrow:hover {
-  transform: none;
+  translate: none;
   box-shadow: none;
 }
 .mrow__text {
@@ -1675,4 +1677,74 @@ p {
 }
 .mrow .card__price {
   font-size: 1.05rem;
+}
+
+/* Simulated QR payment panel */
+.qr-demo {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px dashed var(--brass);
+}
+.qr-demo__code {
+  width: 112px;
+  height: 112px;
+  flex: none;
+  border-radius: 8px;
+}
+.qr-demo__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--navy-900);
+}
+.qr-demo__note {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+/* Directions buttons (Google Maps / Waze / Apple Maps) */
+.directions {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.visit__card .directions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--navy-900);
+  color: var(--navy-900);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.visit__card .directions__btn:hover {
+  background: var(--navy-900);
+  color: var(--cream);
+}
+.directions__icon {
+  display: inline-flex;
+}
+.directions__copy {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+.directions__copy .linklike {
+  color: var(--navy-700);
+  min-height: 24px;
+}
+.directions__status {
+  margin-left: 0.5rem;
+  color: var(--sage);
 }

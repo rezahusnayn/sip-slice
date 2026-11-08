@@ -39,20 +39,22 @@ export function Menu({ onCustomise, onAdded }: Props) {
   };
 
   // Animate layout changes after the filter re-renders.
+  // Cards stay in normal document flow (no `absolute`), so the menu never
+  // collapses mid-animation and the sticky filter bar stays put. Flip only
+  // animates transforms from each card's old position to its new one.
   useLayoutEffect(() => {
     const state = flipState.current;
     if (!state || !grid.current) return;
     flipState.current = null;
+    // The page height has already changed: re-measure scroll triggers before painting.
+    ScrollTrigger.refresh();
     Flip.from(state, {
       targets: grid.current.querySelectorAll(".card"),
-      duration: dur(0.6),
-      ease: "power3.inOut",
-      absolute: true,
-      nested: true,
-      // Page height changed: recalculate every ScrollTrigger below the menu.
-      onComplete: () => ScrollTrigger.refresh(),
-      onEnter: (els) => gsap.fromTo(els, { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: dur(0.5) }),
-      onLeave: (els) => gsap.to(els, { opacity: 0, scale: 0.94, duration: dur(0.3) }),
+      duration: dur(0.5),
+      ease: "power2.out",
+      scale: false,
+      onEnter: (els) =>
+        gsap.fromTo(els, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: dur(0.45), stagger: 0.02, overwrite: true }),
     });
   }, [visible]);
 

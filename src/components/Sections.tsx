@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { gsap, useGSAP, REDUCED_QUERY } from "../lib/motion";
 import { VERIFIED } from "../data/verified";
 import { MonsteraLeaf } from "./Art";
@@ -80,6 +80,56 @@ export function Story() {
 
 const L = VERIFIED.listing;
 
+/** Search by the verified business name + address (no guessed coordinates). */
+const PLACE_QUERY = encodeURIComponent(`Sip & Savor Cafe, ${L.address}`);
+const pin = (
+  <svg viewBox="0 0 24 24" width="18" height="18">
+    <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+const DIRECTIONS = [
+  { name: "Google Maps", href: `https://www.google.com/maps/search/?api=1&query=${PLACE_QUERY}`, icon: pin },
+  { name: "Waze", href: `https://waze.com/ul?q=${PLACE_QUERY}&navigate=yes`, icon: pin },
+  { name: "Apple Maps", href: `https://maps.apple.com/?q=${PLACE_QUERY}`, icon: pin },
+];
+
+function CopyAddress({ text }: { text: string }) {
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
+  return (
+    <p className="directions__copy">
+      <button
+        type="button"
+        className="linklike"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setState("done");
+          } catch {
+            // Fallback for browsers/contexts that block the async clipboard API.
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand("copy");
+            ta.remove();
+            setState(ok ? "done" : "failed");
+          }
+          window.setTimeout(() => setState("idle"), 2500);
+        }}
+      >
+        Copy address
+      </button>
+      <span role="status" className="directions__status">
+        {state === "done" ? "Copied." : state === "failed" ? "Couldn't copy. Please select the address above." : ""}
+      </span>
+    </p>
+  );
+}
+
 export function Visit() {
   const root = useRef<HTMLElement>(null);
   useGSAP(
@@ -114,6 +164,20 @@ export function Visit() {
           <p>
             <a href={`tel:${L.phone.replace(/[\s-]/g, "")}`}>{L.phone}</a>
           </p>
+          <ul className="directions" aria-label="Get directions">
+            {DIRECTIONS.map((d) => (
+              <li key={d.name}>
+                <a className="directions__btn" href={d.href} target="_blank" rel="noopener noreferrer">
+                  <span aria-hidden="true" className="directions__icon">
+                    {d.icon}
+                  </span>
+                  {d.name}
+                  <span className="visually-hidden"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <CopyAddress text={`Sip & Savor Cafe, ${L.address}`} />
           <dl>
             <div>
               <dt>Closes</dt>
